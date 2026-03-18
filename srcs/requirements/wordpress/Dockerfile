@@ -1,4 +1,10 @@
-FROM debian:12
+FROM debian:buster
+
+RUN sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list \
+ && sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list \
+ && sed -i '/buster-updates/d' /etc/apt/sources.list
+
+RUN echo "Acquire::Check-Valid-Until false;" > /etc/apt/apt.conf.d/99no-check-valid
 
 RUN apt-get update && apt-get install -y \
     php-fpm \
@@ -8,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 
 RUN mkdir -p /var/www/html
 
-COPY conf/www.conf /etc/php/8.2/fpm/pool.d/
+COPY conf/www.conf /etc/php/7.3/fpm/pool.d/
 
 COPY tools/setup.sh /setup.sh
 RUN chmod +x /setup.sh
