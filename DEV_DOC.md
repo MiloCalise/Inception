@@ -65,8 +65,7 @@ docker compose -f srcs/docker-compose.yml up --build
 ```bash
 make down
 make clean
-sudo rm -rf ~/Data/mariadb/*
-sudo rm -rf ~/Data/wordpress/*
+make fclean
 ```
 
 ---

@@ -55,10 +55,8 @@ Stop and remove containers:
 
 ```bash
 make down
-```
-
-```bash
 make clean
+make fclean
 ```
 
 ## 🏗️ Project Architecture

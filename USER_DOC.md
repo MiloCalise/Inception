@@ -32,10 +32,8 @@ This will:
 
 ```bash
 make down
-```
-
-```bash
 make clean
+make fclean
 ```
 
 ---
@@ -94,8 +92,7 @@ WP_USER_PASSWORD=...
 ```bash
 make down
 make clean
-sudo rm -rf ~/Data/mariadb/*
-sudo rm -rf ~/Data/wordpress/*
+make fclean
 make
 ```
 
@@ -135,7 +132,9 @@ docker logs mariadb
 2. Restart project:
 
 ```bash
+make down
 make clean
+make fclean
 make
 ```
 

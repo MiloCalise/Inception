@@ -1,10 +1,18 @@
 NAME = inception
 
+COMPOSE = docker compose -f srcs/docker-compose.yml
+
+DATA_PATH = /home/miltavar42/data
+
 all:
-	docker compose -f srcs/docker-compose.yml up --build
+	$(COMPOSE) up --build
 
 down:
-	docker compose -f srcs/docker-compose.yml down
+	$(COMPOSE) down
 
 clean:
 	docker system prune -af
+
+fclean: down clean
+	sudo rm -rf $(DATA_PATH)/mariadb/*
+	sudo rm -rf $(DATA_PATH)/wordpress/*

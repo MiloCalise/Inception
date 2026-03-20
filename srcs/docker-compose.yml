@@ -30,7 +30,7 @@ services:
     depends_on:
       - wordpress
     ports:
-      - "443:443"
+      - "${NGINX_PORT}:443"
     volumes:
       - wordpress:/var/www/html
     networks:
