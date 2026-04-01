@@ -1,20 +1,15 @@
 events {}
-
 http {
     server {
-        listen 443 ssl;
-        server_name miltavar42.42.fr;
-
+        listen ${NGINX_PORT} ssl;
+        server_name ${DOMAIN_NAME};
         ssl_certificate /etc/nginx/ssl/nginx.crt;
         ssl_certificate_key /etc/nginx/ssl/nginx.key;
-
         root /var/www/html;
         index index.php index.html;
-
         location / {
             try_files $uri $uri/ /index.php?$args;
         }
-
         location ~ \.php$ {
             include fastcgi.conf;
             fastcgi_pass wordpress:9000;
