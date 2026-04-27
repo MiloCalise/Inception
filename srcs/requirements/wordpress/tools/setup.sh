@@ -14,6 +14,8 @@ if [ ! -f wp-config.php ]; then
 
     wp core download --allow-root
 
+    rm -f /var/www/html/index.nginx-debian.html
+
     wp config create \
         --dbname=$MYSQL_DATABASE \
         --dbuser=$MYSQL_USER \
@@ -22,7 +24,7 @@ if [ ! -f wp-config.php ]; then
         --allow-root
 
     wp core install \
-        --url=https://$DOMAIN_NAME:$NGINX_PORT \
+        --url=https://$DOMAIN_NAME \
         --title="Inception" \
         --admin_user=$WP_ADMIN_USER \
         --admin_password=$WP_ADMIN_PASSWORD \
@@ -33,6 +35,8 @@ if [ ! -f wp-config.php ]; then
     wp user create $WP_USER $WP_USER_EMAIL \
         --user_pass=$WP_USER_PASSWORD \
         --allow-root
+
+    chown -R www-data:www-data /var/www/html
 fi
 
 mkdir -p /run/php
