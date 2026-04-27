@@ -2,7 +2,7 @@ NAME = inception
 
 COMPOSE = docker compose -f srcs/docker-compose.yml
 
-DATA_PATH = /home/miltavar42/data
+DATA_PATH = /home/miltavar/data
 
 all:
 	$(COMPOSE) up --build

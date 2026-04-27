@@ -2,7 +2,7 @@ FROM debian:buster
 
 ARG NGINX_PORT=443
 ENV NGINX_PORT=${NGINX_PORT}
-ENV DOMAIN_NAME=miltavar42.42.fr
+ENV DOMAIN_NAME=miltavar.42.fr
 
 RUN sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list \
     && sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list \
