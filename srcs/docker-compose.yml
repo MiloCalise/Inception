@@ -47,11 +47,11 @@ volumes:
     driver: local
     driver_opts:
       type: none
-      device: /home/miltavar/data/mariadb
+      device: /home/miltavar42/data/mariadb
       o: bind
   wordpress:
     driver: local
     driver_opts:
       type: none
-      device: /home/miltavar/data/wordpress
+      device: /home/miltavar42/data/wordpress
       o: bind
