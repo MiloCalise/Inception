@@ -1,26 +1,53 @@
 #!/bin/bash
+set -e
 
-mkdir -p /run/mysqld
-chown -R mysql:mysql /run/mysqld
-chown -R mysql:mysql /var/lib/mysql
+DATA_DIR=/var/lib/mysql
+RUN_DIR=/run/mysqld
 
-mysqld_safe &
+# Ensure runtime dir exists with correct ownership
+mkdir -p "$RUN_DIR"
+chown -R mysql:mysql "$RUN_DIR"
 
-sleep 10
+# ── First-time initialisation ─────────────────────────────────────────────────
+if [ ! -d "$DATA_DIR/mysql" ]; then
+    echo "[setup.sh] Initialising MariaDB data directory..."
+    mysql_install_db --user=mysql --datadir="$DATA_DIR" > /dev/null
 
-mariadb -e "CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};"
+    # Start a temporary instance (no networking) to run SQL setup
+    mysqld_safe --skip-networking &
+    TEMP_PID=$!
 
-mariadb -e "DROP USER IF EXISTS '${MYSQL_USER}'@'localhost';"
-mariadb -e "DROP USER IF EXISTS '${MYSQL_USER}'@'%';"
+    # Wait until the socket is ready
+    for i in $(seq 1 30); do
+        mysqladmin -u root status > /dev/null 2>&1 && break
+        sleep 1
+    done
 
-mariadb -e "CREATE USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';"
+    echo "[setup.sh] Running database bootstrap..."
+    mysql -u root << EOF
+-- Harden root (local only)
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 
-mariadb -e "GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';"
+-- Application database
+CREATE DATABASE IF NOT EXISTS \`${MYSQL_DATABASE}\`;
 
-mariadb -e "FLUSH PRIVILEGES;"
+-- Application user (reachable from any host inside the Docker network)
+CREATE USER IF NOT EXISTS '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
+GRANT ALL PRIVILEGES ON \`${MYSQL_DATABASE}\`.* TO '${MYSQL_USER}'@'%';
 
-mariadb -e "ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';"
+-- Remove anonymous users and test database
+DELETE FROM mysql.user WHERE User='';
+DROP DATABASE IF EXISTS test;
 
-mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} shutdown
+FLUSH PRIVILEGES;
+EOF
 
+    echo "[setup.sh] Bootstrap done. Stopping temporary instance..."
+    mysqladmin -u root -p"${MYSQL_ROOT_PASSWORD}" shutdown
+    wait "$TEMP_PID"
+    echo "[setup.sh] Temporary instance stopped."
+fi
+
+# ── Start MariaDB in the foreground (PID 1) ───────────────────────────────────
+echo "[setup.sh] Starting MariaDB..."
 exec mysqld_safe

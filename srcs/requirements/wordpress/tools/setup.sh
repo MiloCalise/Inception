@@ -1,40 +1,65 @@
 #!/bin/bash
+set -e
 
-sleep 10
+WP_PATH=/var/www/wordpress
 
-cd /var/www/html
+# ── Wait for MariaDB ──────────────────────────────────────────────────────────
+echo "[setup.sh] Waiting for MariaDB to be ready..."
+for i in $(seq 1 30); do
+    mysqladmin ping \
+        -h mariadb \
+        -u "${MYSQL_USER}" \
+        -p"${MYSQL_PASSWORD}" \
+        --silent > /dev/null 2>&1 && break
+    echo "[setup.sh] Attempt $i/30 – MariaDB not ready yet, retrying in 3s..."
+    sleep 3
+done
 
-if [ ! -f /usr/local/bin/wp ]; then
-    curl -O https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
-    chmod +x wp-cli.phar
-    mv wp-cli.phar /usr/local/bin/wp
-fi
+# ── Install WordPress (idempotent) ────────────────────────────────────────────
+if [ ! -f "${WP_PATH}/wp-config.php" ]; then
 
-if [ ! -f wp-config.php ]; then
+    echo "[setup.sh] Downloading WordPress core..."
+    wp core download \
+        --allow-root \
+        --path="${WP_PATH}"
 
-    wp core download --allow-root
-
+    echo "[setup.sh] Creating wp-config.php..."
     wp config create \
-        --dbname=$MYSQL_DATABASE \
-        --dbuser=$MYSQL_USER \
-        --dbpass=$MYSQL_PASSWORD \
-        --dbhost=mariadb \
-        --allow-root
+        --allow-root \
+        --path="${WP_PATH}" \
+        --dbname="${MYSQL_DATABASE}" \
+        --dbuser="${MYSQL_USER}" \
+        --dbpass="${MYSQL_PASSWORD}" \
+        --dbhost=mariadb:3306 \
+        --dbcharset=utf8mb4
 
+    echo "[setup.sh] Installing WordPress..."
     wp core install \
-        --url=https://$DOMAIN_NAME:$NGINX_PORT \
-        --title="Inception" \
-        --admin_user=$WP_ADMIN_USER \
-        --admin_password=$WP_ADMIN_PASSWORD \
-        --admin_email=$WP_ADMIN_EMAIL \
-        --skip-email \
-        --allow-root
+        --allow-root \
+        --path="${WP_PATH}" \
+        --url="https://${DOMAIN_NAME}" \
+        --title="${WP_TITLE}" \
+        --admin_user="${WP_ADMIN_USER}" \
+        --admin_password="${WP_ADMIN_PASSWORD}" \
+        --admin_email="${WP_ADMIN_EMAIL}" \
+        --skip-email
 
-    wp user create $WP_USER $WP_USER_EMAIL \
-        --user_pass=$WP_USER_PASSWORD \
-        --allow-root
+    echo "[setup.sh] Creating secondary user..."
+    wp user create \
+        --allow-root \
+        --path="${WP_PATH}" \
+        "${WP_USER}" "${WP_USER_EMAIL}" \
+        --role=author \
+        --user_pass="${WP_USER_PASSWORD}"
+
+    # Fix permissions after WP-CLI writes as root
+    chown -R www-data:www-data "${WP_PATH}"
+
+    echo "[setup.sh] WordPress installation complete."
+else
+    echo "[setup.sh] WordPress already installed, skipping."
 fi
 
-mkdir -p /run/php
-
+# ── Start PHP-FPM in the foreground (PID 1) ───────────────────────────────────
+echo "[setup.sh] Starting PHP-FPM 7.3..."
 exec php-fpm7.3 -F

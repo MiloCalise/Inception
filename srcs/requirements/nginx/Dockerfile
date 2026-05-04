@@ -1,27 +1,25 @@
 FROM debian:buster
 
-ARG NGINX_PORT=443
-ENV NGINX_PORT=${NGINX_PORT}
-ENV DOMAIN_NAME=miltavar42.42.fr
+RUN apt-get update && apt-get install -y \
+        nginx \
+        openssl \
+        gettext-base \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN sed -i 's|deb.debian.org|archive.debian.org|g' /etc/apt/sources.list \
-    && sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list \
-    && sed -i '/buster-updates/d' /etc/apt/sources.list
+# Self-signed TLS certificate (replace with a real cert in production)
+RUN mkdir -p /etc/nginx/ssl \
+    && openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout /etc/nginx/ssl/nginx.key \
+        -out  /etc/nginx/ssl/nginx.crt \
+        -subj "/C=FR/ST=IDF/L=Paris/O=42School/OU=miltavar42/CN=miltavar42.42.fr"
 
-RUN echo "Acquire::Check-Valid-Until false;" > /etc/apt/apt.conf.d/99no-check-valid
+COPY conf/nginx.conf.template /etc/nginx/conf.d/nginx.conf.template
 
-RUN apt-get update && apt-get install -y nginx openssl gettext-base
+EXPOSE 443
 
-RUN mkdir -p /etc/nginx/ssl
-
-COPY conf/nginx.conf.template /etc/nginx/nginx.conf.template
-
-EXPOSE ${NGINX_PORT}
-
-CMD envsubst '${NGINX_PORT} ${DOMAIN_NAME}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf \
-    && openssl req -x509 -nodes -days 365 \
-       -newkey rsa:2048 \
-       -keyout /etc/nginx/ssl/nginx.key \
-       -out /etc/nginx/ssl/nginx.crt \
-       -subj "/C=FR/ST=Paris/L=Paris/O=42/OU=42/CN=${DOMAIN_NAME}" \
-    && nginx -g "daemon off;"
+# envsubst replaces $DOMAIN_NAME at runtime, then starts nginx in foreground
+CMD ["sh", "-c", \
+    "envsubst '$DOMAIN_NAME' \
+        < /etc/nginx/conf.d/nginx.conf.template \
+        > /etc/nginx/conf.d/default.conf \
+    && nginx -g 'daemon off;'"]

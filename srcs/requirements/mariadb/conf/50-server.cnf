@@ -1,3 +1,10 @@
 [mysqld]
-bind-address = 0.0.0.0
-port = 3306
+user            = mysql
+pid-file        = /run/mysqld/mysqld.pid
+socket          = /run/mysqld/mysqld.sock
+port            = 3306
+datadir         = /var/lib/mysql
+# Listen on all interfaces so WordPress container can reach us
+bind-address    = 0.0.0.0
+# Disable unnecessary features for this setup
+skip-name-resolve
