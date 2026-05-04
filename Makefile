@@ -1,11 +1,11 @@
 NAME = inception
 
-COMPOSE = docker compose -f srcs/docker-compose.yml
+COMPOSE = docker compose -f -d srcs/docker-compose.yml
 
 DATA_PATH = /home/miltavar42/data
 
 all:
-	$(COMPOSE) up --build -d
+	$(COMPOSE) up --build
 
 down:
 	$(COMPOSE) down
