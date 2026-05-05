@@ -42,7 +42,7 @@ make
 Open your browser and go to:
 
 ```text
-https://miltavar.42.fr
+https://miltavar42.42.fr
 ```
 
 ⚠️ A security warning may appear due to the self-signed SSL certificate (this is expected).
