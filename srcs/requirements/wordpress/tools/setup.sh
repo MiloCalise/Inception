@@ -14,13 +14,11 @@ for i in $(seq 1 30); do
     sleep 3
 done
 
-# ── Download (skip si déjà présent) ──────────────────────────────────────────
 if [ ! -f "${WP_PATH}/wp-includes/version.php" ]; then
     echo "[setup.sh] Downloading WordPress core..."
     wp core download --allow-root --path="${WP_PATH}"
 fi
 
-# ── Config (skip si déjà présent) ────────────────────────────────────────────
 if [ ! -f "${WP_PATH}/wp-config.php" ]; then
     echo "[setup.sh] Creating wp-config.php..."
     wp config create \
@@ -33,7 +31,6 @@ if [ ! -f "${WP_PATH}/wp-config.php" ]; then
         --dbcharset=utf8mb4
 fi
 
-# ── Install (skip si déjà installé) ──────────────────────────────────────────
 if ! wp core is-installed --allow-root --path="${WP_PATH}" 2>/dev/null; then
     echo "[setup.sh] Installing WordPress..."
     wp core install \

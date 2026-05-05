@@ -16,16 +16,13 @@ RUN sed -i 's|http://deb.debian.org|http://archive.debian.org|g' /etc/apt/source
         mariadb-client \
     && rm -rf /var/lib/apt/lists/*
 
-# ── WP-CLI ───────────────────────────────────────────────────────────────────
 RUN curl -fsSL \
         https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar \
         -o /usr/local/bin/wp \
     && chmod +x /usr/local/bin/wp
 
-# ── PHP-FPM pool config ──────────────────────────────────────────────────────
 COPY conf/www.conf /etc/php/7.3/fpm/pool.d/www.conf
 
-# ── WordPress root ───────────────────────────────────────────────────────────
 RUN mkdir -p /var/www/wordpress \
     && chown -R www-data:www-data /var/www/wordpress
 

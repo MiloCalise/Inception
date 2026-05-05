@@ -1,6 +1,5 @@
 services:
 
-  # ─── NGINX ──────────────────────────────────────────────────────────────────
   nginx:
     build:
       context: requirements/nginx
@@ -18,7 +17,6 @@ services:
     env_file:
       - .env
 
-  # ─── WordPress + PHP-FPM ────────────────────────────────────────────────────
   wordpress:
     build:
       context: requirements/wordpress
@@ -34,7 +32,6 @@ services:
     env_file:
       - .env
 
-  # ─── MariaDB ────────────────────────────────────────────────────────────────
   mariadb:
     build:
       context: requirements/mariadb
@@ -48,14 +45,10 @@ services:
     env_file:
       - .env
 
-# ─── Network ──────────────────────────────────────────────────────────────────
 networks:
   inception:
     driver: bridge
 
-# ─── Volumes ──────────────────────────────────────────────────────────────────
-# Named volumes with local driver pointing to /home/miltavar42/data/*
-# The directories must exist before `docker-compose up` (Makefile handles it).
 volumes:
   mariadb_data:
     driver: local

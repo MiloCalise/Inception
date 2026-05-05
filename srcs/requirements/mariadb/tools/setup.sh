@@ -8,13 +8,11 @@ INIT_FLAG="${DATA_DIR}/.inception_initialized"
 mkdir -p "$RUN_DIR"
 chown -R mysql:mysql "$RUN_DIR"
 
-# ── Initialisation du datadir si vide ────────────────────────────────────────
 if [ ! -d "${DATA_DIR}/mysql" ]; then
     echo "[setup.sh] Initialising MariaDB data directory..."
     mysql_install_db --user=mysql --datadir="$DATA_DIR" > /dev/null
 fi
 
-# ── Bootstrap SQL (une seule fois, marqué par un flag) ───────────────────────
 if [ ! -f "$INIT_FLAG" ]; then
     echo "[setup.sh] Starting temporary instance for bootstrap..."
     mysqld_safe --skip-networking &

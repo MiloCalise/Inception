@@ -9,7 +9,6 @@ RUN sed -i 's|http://deb.debian.org|http://archive.debian.org|g' /etc/apt/source
         gettext-base \
     && rm -rf /var/lib/apt/lists/*
 
-# Self-signed TLS certificate (replace with a real cert in production)
 RUN mkdir -p /etc/nginx/ssl \
     && openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
         -keyout /etc/nginx/ssl/nginx.key \
@@ -20,7 +19,6 @@ COPY conf/nginx.conf.template /etc/nginx/conf.d/nginx.conf.template
 
 EXPOSE 443
 
-# envsubst replaces $DOMAIN_NAME at runtime, then starts nginx in foreground
 CMD ["sh", "-c", \
     "envsubst '$DOMAIN_NAME' \
         < /etc/nginx/conf.d/nginx.conf.template \
