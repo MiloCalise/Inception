@@ -3,7 +3,6 @@ set -e
 
 WP_PATH=/var/www/wordpress
 
-# ── Wait for MariaDB ──────────────────────────────────────────────────────────
 echo "[setup.sh] Waiting for MariaDB to be ready..."
 for i in $(seq 1 30); do
     mysqladmin ping \
@@ -11,18 +10,18 @@ for i in $(seq 1 30); do
         -u "${MYSQL_USER}" \
         -p"${MYSQL_PASSWORD}" \
         --silent > /dev/null 2>&1 && break
-    echo "[setup.sh] Attempt $i/30 – MariaDB not ready yet, retrying in 3s..."
+    echo "[setup.sh] Attempt $i/30 – retrying in 3s..."
     sleep 3
 done
 
-# ── Install WordPress (idempotent) ────────────────────────────────────────────
-if [ ! -f "${WP_PATH}/wp-config.php" ]; then
-
+# ── Download (skip si déjà présent) ──────────────────────────────────────────
+if [ ! -f "${WP_PATH}/wp-includes/version.php" ]; then
     echo "[setup.sh] Downloading WordPress core..."
-    wp core download \
-        --allow-root \
-        --path="${WP_PATH}"
+    wp core download --allow-root --path="${WP_PATH}"
+fi
 
+# ── Config (skip si déjà présent) ────────────────────────────────────────────
+if [ ! -f "${WP_PATH}/wp-config.php" ]; then
     echo "[setup.sh] Creating wp-config.php..."
     wp config create \
         --allow-root \
@@ -32,7 +31,10 @@ if [ ! -f "${WP_PATH}/wp-config.php" ]; then
         --dbpass="${MYSQL_PASSWORD}" \
         --dbhost=mariadb:3306 \
         --dbcharset=utf8mb4
+fi
 
+# ── Install (skip si déjà installé) ──────────────────────────────────────────
+if ! wp core is-installed --allow-root --path="${WP_PATH}" 2>/dev/null; then
     echo "[setup.sh] Installing WordPress..."
     wp core install \
         --allow-root \
@@ -52,14 +54,10 @@ if [ ! -f "${WP_PATH}/wp-config.php" ]; then
         --role=author \
         --user_pass="${WP_USER_PASSWORD}"
 
-    # Fix permissions after WP-CLI writes as root
     chown -R www-data:www-data "${WP_PATH}"
-
-    echo "[setup.sh] WordPress installation complete."
-else
-    echo "[setup.sh] WordPress already installed, skipping."
 fi
 
-# ── Start PHP-FPM in the foreground (PID 1) ───────────────────────────────────
+mkdir -p /run/php
+
 echo "[setup.sh] Starting PHP-FPM 7.3..."
 exec php-fpm7.3 -F

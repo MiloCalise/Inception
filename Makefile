@@ -41,10 +41,11 @@ down:
 
 ## clean : down + remove volumes + images + data dirs
 clean: down
-	@echo "$(RED)[$(NAME)] Removing volumes, images and data...$(RESET)"
+	@echo "$(RED)[$(NAME)] Removing volumes, images and data contents...$(RESET)"
 	docker-compose --env-file $(ENV_FILE) -f $(COMPOSE) down \
 	    --volumes --rmi all --remove-orphans
-	sudo rm -rf $(DATA_PATH)
+	sudo rm -rf $(DATA_PATH)/mariadb && mkdir -p $(DATA_PATH)/mariadb
+	sudo rm -rf $(DATA_PATH)/wordpress && mkdir -p $(DATA_PATH)/wordpress
 	@echo "$(RED)[$(NAME)] Clean done.$(RESET)"
 
 ## fclean : clean + prune all unused Docker objects
